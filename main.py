@@ -1,7 +1,8 @@
 from modules.PlotTxtFile import plot_file, np
 
 
-# Tip: plot_file(saved_file_name, model_function=None, p0=None, fit_start=None, fit_end=None) -> popt, error
+# Tip: plot_file(saved_file_name, model_function=None, p0=None, fit_start=None, fit_end=None, split_str=";")
+# -> popt, error (parameters of fit function, and their error)
 # p = parameter (of fit function)
 
 # ---------------------------

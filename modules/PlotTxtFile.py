@@ -2,8 +2,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
+"""""
+Welcome to PlotTxtFile, here is a short manual description:
+* fist get any experiment data as txt file and save it in TxtFiles (make sure to set right split sign)
+* use plot_file to get basic plot of function
+* set y_log/x_log=True to make y/x-axi logarithmic
 
-def plot_file(saved_file_name, model_function=None, p0=None, fit_start=None, fit_end=None):
+fitting (see example in main.py):
+* define model_function and give starting values in as List (must not be very accurate)
+* you may define start and end value for the fit (this only effects plot of the fit function)
+* the function returns the fit parameters and their errors (extract by print)
+"""""
+
+
+def plot_file(saved_file_name, split_sign=";",
+              model_function=None, p0=None, fit_start=None, fit_end=None, y_log=False, x_log=False):
     error = None
     popt = None
     plot_data = "modules/TxtFiles/" + saved_file_name + ".txt"
@@ -11,7 +24,7 @@ def plot_file(saved_file_name, model_function=None, p0=None, fit_start=None, fit
     y_list = []
     with open(plot_data, 'r') as file:
         for line in file:
-            x_value, y_value = line.strip().split(';')
+            x_value, y_value = line.strip().split(split_sign)
             x_list.append(float(x_value))
             y_list.append(float(y_value))
 
@@ -42,6 +55,10 @@ def plot_file(saved_file_name, model_function=None, p0=None, fit_start=None, fit
         plt.plot(x_data, y_data, color='black', label=saved_file_name + " data", marker='o', markersize=1)
 
     plt.title(saved_file_name)
+    if y_log:
+        plt.yscale('log')
+    if x_log:
+        plt.xscale('log')
     plt.grid(True)
     plt.legend(loc='best')
     plt.show()
