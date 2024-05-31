@@ -18,5 +18,5 @@ B_0 = 0
 p0 = [A_0, B_0]
 # ---------------------------
 
-popt, error = plot_file("Spectroscopy", model_function, p0, fit_start=6.78e-7)
+popt, error = plot_file("Spectroscopy", model_function=model_function, p0=p0, fit_start=6.78e-7)
 print(f"Optimal parameters {p_str}: {popt}, error: {error}")
