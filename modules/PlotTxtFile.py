@@ -15,7 +15,7 @@ fitting (see example in main.py):
 """""
 
 
-def plot_file(saved_file_name, split_sign=";",
+def plot_file(saved_file_name, split_sign=";", y_name="y", x_name="x",
               model_function=None, p0=None, fit_start=None, fit_end=None, y_log=False, x_log=False):
     error = None
     popt = None
@@ -55,6 +55,8 @@ def plot_file(saved_file_name, split_sign=";",
         plt.plot(x_data, y_data, color='black', label=saved_file_name + " data", marker='o', markersize=1)
 
     plt.title(saved_file_name)
+    plt.xlabel(x_name)
+    plt.ylabel(y_name)
     if y_log:
         plt.yscale('log')
     if x_log:
