@@ -12,12 +12,11 @@ def model_function(x, A, B):
     return A * x + B
 
 
-p_str = "A, B"
-
 # StartValues
 A_0 = -5e6
 B_0 = 0
 p0 = [A_0, B_0]
+p_str = "A, B"
 
 # Configuration
 file_name = "FrequencySweep"
