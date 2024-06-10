@@ -15,7 +15,7 @@ fitting (see example in main.py):
 """""
 
 
-def plot_file(saved_file_name, split_sign=";", y_name="y", x_name="x",
+def plot_file(saved_file_name, split_sign=";", y_name="y", x_name="x", x_column=0, y_column=1,
               model_function=None, p0=None, fit_start=None, fit_end=None, y_log=False, x_log=False):
     error = None
     popt = None
@@ -24,7 +24,9 @@ def plot_file(saved_file_name, split_sign=";", y_name="y", x_name="x",
     y_list = []
     with open(plot_data, 'r') as file:
         for line in file:
-            x_value, y_value = line.strip().split(split_sign)
+            data_line = line.strip().split(split_sign)
+            x_value = data_line[x_column]
+            y_value = data_line[y_column]
             x_list.append(float(x_value))
             y_list.append(float(y_value))
 
