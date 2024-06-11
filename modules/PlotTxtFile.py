@@ -15,41 +15,25 @@ fitting (see example in main.py):
 """""
 
 
-def plot_file(saved_file_name, title=None, split_sign=";", y_name="y", x_name="x", x_column=0, y_column=1,
-              x_scale=1.0, y_scale=1.0,
-              model_function=None, p0=None, fit_start=None, fit_end=None, y_log=False, x_log=False):
-    error = None
-    popt = None
-    plot_data = "modules/TxtFiles/" + saved_file_name + ".txt"
-    x_list = []
-    y_list = []
-    with open(plot_data, 'r') as file:
-        for line in file:
-            data_line = line.strip().split(split_sign)
-            x_value = float(data_line[x_column]) * x_scale
-            y_value = float(data_line[y_column]) * y_scale
-            x_list.append(x_value)
-            y_list.append(y_value)
+def plot_file(saved_file_name, title=None, split_sign=";", x_name="x", y_name="y", x_column=0, y_column=1, x_scale=1.0,
+              y_scale=1.0, model_function=None, p0=None, fit_start=None, fit_end=None, y_log=False, x_log=False):
 
-    x_data = np.array(x_list)
-    y_data = np.array(y_list)
+    errors = None
+    opt_paras = None
 
-    mask = np.ones_like(x_data, dtype=bool)
+    x_list, y_list = extract_data(saved_file_name, split_sign, x_column, y_column)
 
-    if fit_start is not None:
-        mask = (x_data >= fit_start)
-    if fit_end is not None:
-        mask = (x_data <= fit_end) & mask
+    x_data = np.array(x_list) * x_scale
+    y_data = np.array(y_list) * y_scale
 
-    x_fit = x_data[mask]
-    y_fit = y_data[mask]
+    x_fit, y_fit = get_fit_arrays(fit_end, fit_start, x_data, y_data)
 
     if model_function is not None:
-        popt, pcov = curve_fit(model_function, x_fit, y_fit, p0=p0)[:2]
-        error = np.sqrt(np.diag(pcov))
+        opt_paras, error_matrix = curve_fit(model_function, x_fit, y_fit, p0=p0)[:2]
+        errors = np.sqrt(np.diag(error_matrix))
 
         x_model = np.linspace(np.min(x_fit), np.max(x_fit), 100)
-        y_model = model_function(x_model, *popt)
+        y_model = model_function(x_model, *opt_paras)
 
         plt.plot(x_data, y_data, color='black', label=saved_file_name + " data", linestyle="", marker='o', markersize=1)
         plt.plot(x_model, y_model, color='r', label="fit plot")
@@ -71,5 +55,29 @@ def plot_file(saved_file_name, title=None, split_sign=";", y_name="y", x_name="x
     plt.legend(loc='best')
     plt.show()
 
-    if model_function is not None:
-        return popt, error
+    return opt_paras, errors
+
+
+def get_fit_arrays(fit_end, fit_start, x_data, y_data):
+    mask = np.ones_like(x_data, dtype=bool)
+    if fit_start is not None:
+        mask = (x_data >= fit_start)
+    if fit_end is not None:
+        mask = (x_data <= fit_end) & mask
+    x_fit = x_data[mask]
+    y_fit = y_data[mask]
+    return x_fit, y_fit
+
+
+def extract_data(saved_file_name, split_sign, x_column, y_column):
+    plot_data = "modules/TxtFiles/" + saved_file_name + ".txt"
+    x_list = []
+    y_list = []
+    with open(plot_data, 'r') as file:
+        for line in file:
+            data_line = line.strip().split(split_sign)
+            x_value = float(data_line[x_column])
+            y_value = float(data_line[y_column])
+            x_list.append(x_value)
+            y_list.append(y_value)
+    return x_list, y_list
