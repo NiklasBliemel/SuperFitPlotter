@@ -1,8 +1,8 @@
 from tkinter import filedialog
 import customtkinter as ctk
-
 from modules.PlotTxtFile import plot_file
-from modules.ExtractFunction import read_expression
+from modules.ExtractFunction import read_expression, make_pretty_expr
+
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -11,10 +11,28 @@ root.title("fit plot")
 root.geometry("730x630")
 
 
-def select_file():
-    filename = filedialog.askopenfilename()
-    if filename.endswith(".txt"):
-        file_label.configure(text=filename, bg_color=default_label_bg)
+def select_file(file_choice):
+    temp_list = list(file_list_var.get())
+    temp_box = file_combobox.cget("values")
+    index = temp_box.index(file_choice)
+    file_var.set(temp_list[index])
+
+
+def append_file():
+    file_name = filedialog.askopenfilename()
+    temp_list = list(file_list_var.get())
+    short_file_name = file_name.split("/")[-1]
+    temp_box = file_combobox.cget("values")
+    if short_file_name.endswith(".txt"):
+        if short_file_name not in temp_box:
+            temp_list.append(file_name)
+            file_list_var.set(temp_list)
+            temp_box.append(short_file_name)
+            file_combobox.configure(values=temp_box)
+            file_combobox.set(short_file_name)
+            select_file(short_file_name)
+        # activate rest
+        split_sign_entry.configure(placeholder_text=f" ; / ..", state="normal")
         x_column_entry.configure(placeholder_text="x column (0 default)", state="normal")
         y_column_entry.configure(placeholder_text="y column (1 default)", state="normal")
         x_scale_entry.configure(placeholder_text="x scale / function", state="normal")
@@ -23,15 +41,9 @@ def select_file():
         y_log_switch.configure(state="normal")
         if fit_switch_var.get() == "off" or fit_function_var.get() != "":
             plot_button.configure(state="normal")
-    else:
-        file_label.configure(text="no .txt file", bg_color="red")
-        x_column_entry.configure(state="disabled")
-        y_column_entry.configure(state="disabled")
-        x_scale_entry.configure(state="disabled")
-        y_scale_entry.configure(state="disabled")
-        x_log_switch.configure(state="disabled")
-        y_log_switch.configure(state="disabled")
-        plot_button.configure(state="disabled")
+        error_field.configure(text="")
+    elif file_name != "":
+        error_field.configure(text="Please select a txt file")
 
 
 def plot():
@@ -41,30 +53,26 @@ def plot():
     y_scale = y_scale_entry.get() if y_scale_entry.get() != "" else 1
     x_log = True if x_log_switch_var.get() == "on" else False
     y_log = True if y_log_switch_var.get() == "on" else False
-
+    split_sign = split_sign_entry.get() if split_sign_entry.get() != "" else ";"
+    file_name = file_var.get()
     if fit_switch.get() == "off":
         try:
-            plot_file(file_path=file_label.cget("text"), x_column=x_column, y_column=y_column,
+            error_field.configure(text="")
+            plot_file(file_path=file_name, x_column=x_column, y_column=y_column, split_sign=split_sign,
                       title=plot_title.get(), x_name=x_axis.get(), y_name=y_axis.get(),
                       x_scale=x_scale, y_scale=y_scale, x_log=x_log, y_log=y_log)
-            error_field.configure(text="")
         except Exception as e:
             error_field.configure(text=e)
-
     if fit_switch.get() == "on":
         fit_start = float(fit_start_entry.get()) if fit_start_entry.get() != "" else None
         fit_end = float(fit_end_entry.get()) if fit_end_entry.get() != "" else None
         try:
-            errors = plot_file(file_path=file_label.cget("text"), x_column=x_column, y_column=y_column,
-                                title=plot_title.get(), x_name=x_axis.get(), y_name=y_axis.get(),
-                                model_function=fit_entry.get(), fit_start=fit_start,
-                                fit_end=fit_end, p0=start_values_var.get(),
-                                x_scale=x_scale, y_scale=y_scale, x_log=x_log, y_log=y_log)
-            text = "errors: "
-            for i in range(len(errors)):
-                text += f"{para_list_var.get()[i]}_err = {errors[i]:.3}; "
-
-            error_field.configure(text=text[:-2])
+            error_field.configure(text="")
+            plot_file(file_path=file_name, x_column=x_column, y_column=y_column, split_sign=split_sign,
+                               title=plot_title.get(), x_name=x_axis.get(), y_name=y_axis.get(),
+                               model_function=fit_entry.get(), fit_start=fit_start,
+                               fit_end=fit_end, p0=start_values_var.get(),
+                               x_scale=x_scale, y_scale=y_scale, x_log=x_log, y_log=y_log)
         except Exception as e:
             error_field.configure(text=e)
 
@@ -96,7 +104,6 @@ def confirm_fit():
     start_values_var.set([0.0 for _ in range(len(para_list))])
     if fit_function_var.get() != "":
         plot_button.configure(state="normal")
-        fit_entry.configure(fg_color=default_entry_fg)
         fit_start_entry.configure(state="normal", placeholder_text="fit start")
         fit_end_entry.configure(state="normal", placeholder_text="fit end")
         start_values_button.configure(state="normal")
@@ -104,8 +111,11 @@ def confirm_fit():
         for i in range(len(para_list_var.get())):
             text += para_list[i] + "_0=" + str(start_values_var.get()[i]) + "; "
         start_values_label_2.configure(text=text[:-2])
+        pretty_expr = "f(x) = " + fit_entry.get()
+        fit_label.configure(text=pretty_expr)
+        error_field.configure(text="")
     else:
-        fit_entry.configure(fg_color="yellow")
+        error_field.configure(text="bad fit function")
 
 
 def set_start_values():
@@ -114,16 +124,25 @@ def set_start_values():
         text += para + "_0/"
 
     try:
-        start_values_input = ctk.CTkInputDialog(text=text[:-1]).get_input().split("/")
-        new_start_values = [float(value) for value in start_values_input]
-        start_values_var.set(new_start_values)
-        text = ""
-        for i in range(len(para_list_var.get())):
-            text += f"{para_list_var.get()[i]}_0={start_values_var.get()[i]:.3}; "
-        start_values_label_2.configure(text=text[:-2])
-        start_values_button.configure(fg_color=default_button_color)
-    except Exception:
-        start_values_button.configure(fg_color="red")
+        start_values_input = ctk.CTkInputDialog(text=text[:-1], title="set start variables").get_input()
+        if start_values_input is not None:
+            new_start_values = []
+            old_start_values = start_values_var.get()
+            start_values_input = start_values_input.split("/")
+            for index in range(len(start_values_input)):
+                try:
+                    value = float(start_values_input[index])
+                    new_start_values.append(value)
+                except Exception:
+                    new_start_values.append(old_start_values[index])
+            start_values_var.set(new_start_values)
+            text = ""
+            for i in range(len(para_list_var.get())):
+                text += f"{para_list_var.get()[i]}_0={start_values_var.get()[i]:.3}; "
+            start_values_label_2.configure(text=text[:-2])
+        error_field.configure(text="")
+    except Exception as e:
+        error_field.configure(text=e)
 
 
 def start_values_string():
@@ -136,16 +155,24 @@ master_frame.grid(padx=20, pady=20)
 # frame
 data_config = ctk.CTkFrame(master=master_frame)
 data_config.grid(row=0, column=0, padx=20, pady=20)
-# button
-select_file_button = ctk.CTkButton(master=data_config, text="select file", command=select_file)
-select_file_button.grid(row=0, columnspan=3, padx=10, pady=12)
+# choose file button
+select_file_button = ctk.CTkButton(master=data_config, text="select file", command=append_file)
+select_file_button.grid(row=1, column=0, columnspan=2, padx=10, pady=12)
 # file
-file_label = ctk.CTkLabel(master=data_config, text="none", wraplength=500)
-file_label.grid(row=1, columnspan=3, padx=10, pady=12)
+file_var = ctk.StringVar(value="")
+file_list_var = ctk.Variable(value=[])
+file_combobox_var = ctk.StringVar(value="")
+file_combobox = ctk.CTkComboBox(master=data_config, command=select_file, values=[], width=200,
+                                variable=file_combobox_var, state="readonly")
+file_combobox.grid(row=0, column=0, columnspan=2, padx=10, pady=12)
+# split sign
+split_sign_label = ctk.CTkLabel(master=data_config, text="split sign:")
+split_sign_label.grid(row=0, column=2, padx=10, pady=12)
+split_sign_entry = ctk.CTkEntry(master=data_config, state="disabled", width=40)
+split_sign_entry.grid(row=1, column=2, padx=10, pady=12)
 # choose x and y columns
 x_column_entry = ctk.CTkEntry(master=data_config, state="disabled")
 x_column_entry.grid(row=2, column=0, padx=10, pady=12)
-default_entry_fg = x_column_entry.cget("fg_color")
 y_column_entry = ctk.CTkEntry(master=data_config, state="disabled")
 y_column_entry.grid(row=2, column=1, padx=10, pady=12)
 # x and y scales
@@ -192,6 +219,8 @@ fit_entry.grid(row=0, column=1, columnspan=2, padx=10, pady=12, sticky="ew")
 # fit confirmation button
 confirm_fit_button = ctk.CTkButton(master=fit_frame, text="confirm", command=confirm_fit, state="disabled")
 confirm_fit_button.grid(row=0, column=3, padx=10, pady=12)
+fit_label = ctk.CTkLabel(master=fit_frame, text="", text_color="grey")
+fit_label.grid(row=2, column=0, columnspan=2, padx=10, pady=12)
 # fit config
 fit_start_entry = ctk.CTkEntry(master=fit_frame, state="disabled")
 fit_start_entry.grid(row=1, column=0, padx=10, pady=12)
@@ -201,11 +230,9 @@ start_values_label_1 = ctk.CTkLabel(master=fit_frame, text="start values:")
 start_values_label_1.grid(row=1, column=2, padx=10, pady=12)
 start_values_label_2 = ctk.CTkLabel(master=fit_frame, text="", text_color="grey")
 start_values_label_2.grid(row=2, column=2, columnspan=2, padx=10, pady=12)
-default_label_bg = start_values_label_2.cget("bg_color")
 start_values_button = ctk.CTkButton(master=fit_frame, text="set start values", command=set_start_values,
                                     state="disabled")
 start_values_button.grid(row=1, column=3, padx=10, pady=12)
-default_button_color = start_values_button.cget("fg_color")
 # variables
 fit_function_var = ctk.Variable()
 fit_function_var.set("")

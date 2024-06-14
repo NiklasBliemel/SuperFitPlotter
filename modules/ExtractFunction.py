@@ -4,7 +4,7 @@ from sympy.utilities.lambdify import lambdify
 
 
 def make_pretty_expr(expression):
-    return latex(parse_expr(expression))
+    return rf"${latex(parse_expr(expression))}$"
 
 
 def read_expression(expression):
