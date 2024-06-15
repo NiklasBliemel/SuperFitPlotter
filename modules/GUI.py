@@ -1,8 +1,7 @@
 from tkinter import filedialog
 import customtkinter as ctk
 from modules.PlotTxtFile import plot_file
-from modules.ExtractFunction import read_expression, make_pretty_expr
-
+from modules.ExtractFunction import extract_x_function, make_pretty_expr
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -33,10 +32,9 @@ def append_file():
             select_file(short_file_name)
         # activate rest
         split_sign_entry.configure(placeholder_text=f" ; / ..", state="normal")
-        x_column_entry.configure(placeholder_text="x column (0 default)", state="normal")
-        y_column_entry.configure(placeholder_text="y column (1 default)", state="normal")
-        x_scale_entry.configure(placeholder_text="x scale / function", state="normal")
-        y_scale_entry.configure(placeholder_text="y scale / function", state="normal")
+        skip_line_entry.configure(placeholder_text=f"0", state="normal")
+        x_expr_entry.configure(placeholder_text="default C1", state="normal")
+        y_expr_entry.configure(placeholder_text="default C2", state="normal")
         x_log_switch.configure(state="normal")
         y_log_switch.configure(state="normal")
         if fit_switch_var.get() == "off" or fit_function_var.get() != "":
@@ -47,32 +45,29 @@ def append_file():
 
 
 def plot():
-    x_column = int(x_column_entry.get()) if x_column_entry.get() != "" else 0
-    y_column = int(y_column_entry.get()) if y_column_entry.get() != "" else 1
-    x_scale = x_scale_entry.get() if x_scale_entry.get() != "" else 1
-    y_scale = y_scale_entry.get() if y_scale_entry.get() != "" else 1
+    x_expr = x_expr_entry.get() if x_expr_entry.get() != "" else "C1"
+    y_expr = y_expr_entry.get() if y_expr_entry.get() != "" else "C2"
     x_log = True if x_log_switch_var.get() == "on" else False
     y_log = True if y_log_switch_var.get() == "on" else False
     split_sign = split_sign_entry.get() if split_sign_entry.get() != "" else ";"
+    skip_line = int(skip_line_entry.get()) if skip_line_entry.get() != "" else 0
     file_name = file_var.get()
     if fit_switch.get() == "off":
         try:
             error_field.configure(text="")
-            plot_file(file_path=file_name, x_column=x_column, y_column=y_column, split_sign=split_sign,
-                      title=plot_title.get(), x_name=x_axis.get(), y_name=y_axis.get(),
-                      x_scale=x_scale, y_scale=y_scale, x_log=x_log, y_log=y_log)
+            plot_file(file_path=file_name, x_expr=x_expr, y_expr=y_expr, split_sign=split_sign, title=plot_title.get(),
+                      x_name=x_axis.get(), y_name=y_axis.get(), x_log=x_log, y_log=y_log, skip_line=skip_line)
         except Exception as e:
             error_field.configure(text=e)
+
     if fit_switch.get() == "on":
         fit_start = float(fit_start_entry.get()) if fit_start_entry.get() != "" else None
         fit_end = float(fit_end_entry.get()) if fit_end_entry.get() != "" else None
         try:
             error_field.configure(text="")
-            plot_file(file_path=file_name, x_column=x_column, y_column=y_column, split_sign=split_sign,
-                               title=plot_title.get(), x_name=x_axis.get(), y_name=y_axis.get(),
-                               model_function=fit_entry.get(), fit_start=fit_start,
-                               fit_end=fit_end, p0=start_values_var.get(),
-                               x_scale=x_scale, y_scale=y_scale, x_log=x_log, y_log=y_log)
+            plot_file(file_path=file_name, x_expr=x_expr, y_expr=y_expr, split_sign=split_sign, title=plot_title.get(),
+                      x_name=x_axis.get(), y_name=y_axis.get(), model_function=fit_entry.get(), fit_start=fit_start,
+                      fit_end=fit_end, p0=start_values_var.get(), x_log=x_log, y_log=y_log, skip_line=skip_line)
         except Exception as e:
             error_field.configure(text=e)
 
@@ -101,7 +96,7 @@ def toggle_switch():
 
 def confirm_fit():
     try:
-        f, para_list = read_expression(fit_entry.get())
+        f, para_list = extract_x_function(fit_entry.get())
         fit_function_var.set(f)
         para_list_var.set(para_list)
         start_values_var.set([1.0 for _ in range(len(para_list))])
@@ -155,40 +150,45 @@ master_frame = ctk.CTkFrame(master=root)
 master_frame.grid(padx=20, pady=20)
 
 # frame
-data_config = ctk.CTkFrame(master=master_frame)
-data_config.grid(row=0, column=0, padx=20, pady=20)
+data_config_frame = ctk.CTkFrame(master=master_frame)
+data_config_frame.grid(row=0, column=0, padx=20, pady=20)
 # choose file button
-select_file_button = ctk.CTkButton(master=data_config, text="select file", command=append_file)
+select_file_button = ctk.CTkButton(master=data_config_frame, text="select file", command=append_file)
 select_file_button.grid(row=1, column=0, columnspan=2, padx=10, pady=12)
 # file
 file_var = ctk.StringVar(value="")
 file_list_var = ctk.Variable(value=[])
 file_combobox_var = ctk.StringVar(value="")
-file_combobox = ctk.CTkComboBox(master=data_config, command=select_file, values=[], width=200,
+file_combobox = ctk.CTkComboBox(master=data_config_frame, command=select_file, values=[], width=200,
                                 variable=file_combobox_var, state="readonly")
 file_combobox.grid(row=0, column=0, columnspan=2, padx=10, pady=12)
-# split sign
-split_sign_label = ctk.CTkLabel(master=data_config, text="split sign:")
-split_sign_label.grid(row=0, column=2, padx=10, pady=12)
-split_sign_entry = ctk.CTkEntry(master=data_config, state="disabled", width=40)
-split_sign_entry.grid(row=1, column=2, padx=10, pady=12)
-# choose x and y columns
-x_column_entry = ctk.CTkEntry(master=data_config, state="disabled")
-x_column_entry.grid(row=2, column=0, padx=10, pady=12)
-y_column_entry = ctk.CTkEntry(master=data_config, state="disabled")
-y_column_entry.grid(row=2, column=1, padx=10, pady=12)
-# x and y scales
-x_scale_entry = ctk.CTkEntry(master=data_config, state="disabled")
-x_scale_entry.grid(row=3, column=0, padx=10, pady=12)
-y_scale_entry = ctk.CTkEntry(master=data_config, state="disabled")
-y_scale_entry.grid(row=3, column=1, padx=10, pady=12)
+# split and skip
+data_config_subframe = ctk.CTkFrame(master=data_config_frame, fg_color="transparent")
+data_config_subframe.grid(row=0, rowspan=2, column=2, padx=20, pady=20)
+split_sign_label = ctk.CTkLabel(master=data_config_subframe, text="split:")
+split_sign_label.grid(row=0, column=0, padx=10, pady=12)
+split_sign_entry = ctk.CTkEntry(master=data_config_subframe, state="disabled", width=50)
+split_sign_entry.grid(row=0, column=1, padx=10, pady=12)
+skip_line_label = ctk.CTkLabel(master=data_config_subframe, text="skip:")
+skip_line_label.grid(row=1, column=0, padx=10, pady=12)
+skip_line_entry = ctk.CTkEntry(master=data_config_subframe, state="disabled", width=50)
+skip_line_entry.grid(row=1, column=1, padx=10, pady=12)
+# x and y expressions
+x_expr_label = ctk.CTkLabel(master=data_config_frame, text="def x-data:")
+x_expr_label.grid(row=2, column=0, padx=10, pady=12)
+y_expr_label = ctk.CTkLabel(master=data_config_frame, text="def y-data:")
+y_expr_label.grid(row=3, column=0, padx=10, pady=12)
+x_expr_entry = ctk.CTkEntry(master=data_config_frame, state="disabled")
+x_expr_entry.grid(row=2, column=1, padx=10, pady=12)
+y_expr_entry = ctk.CTkEntry(master=data_config_frame, state="disabled")
+y_expr_entry.grid(row=3, column=1, padx=10, pady=12)
 # log switches
 x_log_switch_var = ctk.StringVar(value="off")
-x_log_switch = ctk.CTkSwitch(master=data_config, state="disabled", variable=x_log_switch_var, onvalue="on",
+x_log_switch = ctk.CTkSwitch(master=data_config_frame, state="disabled", variable=x_log_switch_var, onvalue="on",
                              offvalue="off", text="log x axis")
 x_log_switch.grid(row=2, column=2, padx=10, pady=12)
 y_log_switch_var = ctk.StringVar(value="off")
-y_log_switch = ctk.CTkSwitch(master=data_config, state="disabled", variable=y_log_switch_var, onvalue="on",
+y_log_switch = ctk.CTkSwitch(master=data_config_frame, state="disabled", variable=y_log_switch_var, onvalue="on",
                              offvalue="off", text="log y axis")
 y_log_switch.grid(row=3, column=2, padx=10, pady=12)
 

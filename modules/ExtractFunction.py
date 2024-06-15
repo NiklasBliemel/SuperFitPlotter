@@ -7,7 +7,7 @@ def make_pretty_expr(expression):
     return rf"${latex(parse_expr(expression))}$"
 
 
-def read_expression(expression):
+def extract_x_function(expression):
     out_list = []
     try:
         function = parse_expr(expression)
@@ -23,5 +23,18 @@ def read_expression(expression):
         out_list = ["x"] + out_list
         function = lambdify(out_list, function)
         return function, out_list[1:]
+    except Exception as e:
+        raise e
+
+
+def extract_any_function(expression):
+    out_list = []
+    try:
+        function = parse_expr(expression)
+        for symbol in function.free_symbols:
+            out_list.append(str(symbol))
+        out_list.sort()
+        function = lambdify(out_list, function)
+        return function, out_list
     except Exception as e:
         raise e
