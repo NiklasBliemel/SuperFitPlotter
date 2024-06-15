@@ -88,7 +88,9 @@ def toggle_switch():
             fit_end_entry.configure(state="normal")
             start_values_button.configure(state="normal")
     else:
-        plot_button.configure(state="normal")
+        if file_var.get() != "":
+            plot_button.configure(state="normal")
+        fit_entry.configure(placeholder_text="")
         fit_entry.configure(state="disabled")
         confirm_fit_button.configure(state="disabled")
         fit_start_entry.configure(state="disabled")
@@ -98,11 +100,11 @@ def toggle_switch():
 
 
 def confirm_fit():
-    f, para_list = read_expression(fit_entry.get())
-    fit_function_var.set(f)
-    para_list_var.set(para_list)
-    start_values_var.set([0.0 for _ in range(len(para_list))])
-    if fit_function_var.get() != "":
+    try:
+        f, para_list = read_expression(fit_entry.get())
+        fit_function_var.set(f)
+        para_list_var.set(para_list)
+        start_values_var.set([0.0 for _ in range(len(para_list))])
         plot_button.configure(state="normal")
         fit_start_entry.configure(state="normal", placeholder_text="fit start")
         fit_end_entry.configure(state="normal", placeholder_text="fit end")
@@ -114,8 +116,8 @@ def confirm_fit():
         pretty_expr = "f(x) = " + fit_entry.get()
         fit_label.configure(text=pretty_expr)
         error_field.configure(text="")
-    else:
-        error_field.configure(text="bad fit function")
+    except Exception as e:
+        error_field.configure(text=e)
 
 
 def set_start_values():
