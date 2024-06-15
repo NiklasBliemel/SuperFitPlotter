@@ -6,6 +6,6 @@ Features Include (that are not obvious):
 - mark Points with simple Mouse click / delete mark with right click
 - dragg marks and legend to desired place
 
-install required modules with "pip install -r requirements.txt"
+install required modules with "pip install -r requirements.txt" and run main.py
 
 Have fun!!
