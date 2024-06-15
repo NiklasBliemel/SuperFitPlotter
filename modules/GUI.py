@@ -104,7 +104,7 @@ def confirm_fit():
         f, para_list = read_expression(fit_entry.get())
         fit_function_var.set(f)
         para_list_var.set(para_list)
-        start_values_var.set([0.0 for _ in range(len(para_list))])
+        start_values_var.set([1.0 for _ in range(len(para_list))])
         plot_button.configure(state="normal")
         fit_start_entry.configure(state="normal", placeholder_text="fit start")
         fit_end_entry.configure(state="normal", placeholder_text="fit end")
