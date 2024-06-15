@@ -10,9 +10,7 @@ Features Include (that are not obvious):
 
 Here a beautiful example:
 <!--suppress CheckImageSize -->
-<img src="readme_material/UI.png" alt="example" height="200">
-<!--suppress CheckImageSize -->
-<img src="readme_material/example.png" alt="example" height="200">
+<img src="readme_material/UI.png" alt="example" height="200"> <img src="readme_material/example.png" alt="example" height="200">
 
 If you have improvement ideas for plot visuals, let me know!
 
