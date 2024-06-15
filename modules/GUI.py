@@ -46,7 +46,11 @@ def append_file():
 
 def plot():
     x_expr = x_expr_entry.get() if x_expr_entry.get() != "" else "C1"
+    if is_float(x_expr):
+        x_expr = f"C1 * {x_expr}"
     y_expr = y_expr_entry.get() if y_expr_entry.get() != "" else "C2"
+    if is_float(y_expr):
+        y_expr = f"C2 * {y_expr}"
     x_log = True if x_log_switch_var.get() == "on" else False
     y_log = True if y_log_switch_var.get() == "on" else False
     split_sign = split_sign_entry.get() if split_sign_entry.get() != "" else ";"
@@ -255,4 +259,9 @@ def run():
     root.mainloop()
 
 
-run()
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
