@@ -9,6 +9,8 @@ from mplcursors import cursor
 
 def plot_file(file_path, title=None, split_sign=";", x_name="", y_name="", x_expr="C1", y_expr="C2", skip_line=0,
               model_function="", p0=None, fit_start=None, fit_end=None, y_log=False, x_log=False):
+    if split_sign == "\\t":
+        split_sign = "\t"
     fig, ax = plt.subplots()
     ax.set_title(title, fontsize=16, pad=15)
     ax.set_xlabel(x_name, fontsize=10, labelpad=8)
@@ -85,6 +87,7 @@ def extract_data(file_path, split_sign, skip_line):
     data = []
     with open(file_path, 'r') as file:
         for line in file:
+            line = line.replace(',', '.')
             data_line = line.strip().split(split_sign)
             data.append(data_line)
     float_data = [[float(item) for item in line] for line in data[skip_line:]]
